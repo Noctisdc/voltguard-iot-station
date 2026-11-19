@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 
 # ---------------------------------------------------------
 # CONFIGURACIÓN DE PÁGINA
@@ -18,27 +17,97 @@ st.set_page_config(
 # ---------------------------------------------------------
 st.markdown("""
 <style>
-    /* Fondo principal y tipografía */
+    /* Fondo principal */
     .stApp {
         background-color: #0B0C0E;
-        color: #F2EFE9;
+        color: #F5F2EB;
     }
 
-    /* Barra lateral */
+    /* Barra lateral con fondo oscuro y contraste forzado */
     section[data-testid="stSidebar"] {
-        background-color: #121417;
-        border-right: 1.5px solid #8C4A1C;
+        background-color: #101215 !important;
+        border-right: 2px solid #B86224 !important;
+    }
+
+    /* Forzar color claro y legible en TODOS los textos de la barra lateral */
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] {
+        color: #F5F2EB !important;
+    }
+
+    /* Recuadros naranja bronce tenue para secciones de la barra lateral */
+    .sidebar-card {
+        background: linear-gradient(145deg, rgba(212, 114, 42, 0.18) 0%, rgba(140, 74, 28, 0.12) 100%);
+        border: 1.5px solid #C86D2D;
+        border-left: 4px solid #E8873A;
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+        margin-bottom: 0.85rem;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+    }
+    .sidebar-card-title {
+        color: #F5A35C !important;
+        font-size: 1.02rem;
+        font-weight: 700;
+        margin: 0 0 0.25rem 0;
+        letter-spacing: 0.3px;
+    }
+    .sidebar-card-desc {
+        color: #E6DFD3 !important;
+        font-size: 0.84rem;
+        margin: 0;
+        line-height: 1.35;
+    }
+
+    /* Contenedores de File Uploader y Sliders en la barra lateral con fondo bronce tenue */
+    section[data-testid="stSidebar"] div[data-testid="stFileUploader"],
+    section[data-testid="stSidebar"] div[data-testid="stSlider"] {
+        background-color: rgba(212, 114, 42, 0.12) !important;
+        border: 1px solid #9E531E !important;
+        border-radius: 8px !important;
+        padding: 0.65rem 0.75rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+
+    /* Zona interna de arrastrar archivo */
+    section[data-testid="stFileUploaderDropzone"] {
+        background-color: #171513 !important;
+        border: 1.5px dashed #D4722A !important;
+        border-radius: 8px !important;
+        color: #F5F2EB !important;
+    }
+    section[data-testid="stFileUploaderDropzone"]:hover {
+        border-color: #F29B50 !important;
+        background-color: #221912 !important;
+    }
+
+    /* Botón "Upload" / "Browse files" dentro del File Uploader */
+    section[data-testid="stFileUploaderDropzone"] button {
+        background-color: #26180E !important;
+        color: #F5B076 !important;
+        border: 1.5px solid #D4722A !important;
+        border-radius: 6px !important;
+        font-weight: 600 !important;
+    }
+    section[data-testid="stFileUploaderDropzone"] button:hover {
+        background-color: #D4722A !important;
+        color: #0B0C0E !important;
     }
 
     /* Encabezado principal estilo industrial */
     .hero-banner {
-        background: linear-gradient(135deg, #16181D 0%, #0D0E11 100%);
+        background: linear-gradient(135deg, #1A1613 0%, #0E1013 100%);
         border: 1.5px solid #C86D2D;
         border-left: 6px solid #E07A2E;
         border-radius: 10px;
         padding: 1.4rem 1.8rem;
         margin-bottom: 1.5rem;
-        box-shadow: 0 4px 20px rgba(200, 109, 45, 0.15);
+        box-shadow: 0 4px 20px rgba(200, 109, 45, 0.18);
     }
     .hero-title {
         color: #F5F2EB;
@@ -48,10 +117,10 @@ st.markdown("""
         letter-spacing: 0.5px;
     }
     .hero-accent {
-        color: #E07A2E;
+        color: #E8873A;
     }
     .hero-subtitle {
-        color: #B8B2A6;
+        color: #D6CFC3;
         font-size: 0.98rem;
         margin-top: 0.35rem;
         margin-bottom: 0;
@@ -59,19 +128,19 @@ st.markdown("""
 
     /* Tarjetas de métricas (KPIs) */
     div[data-testid="stMetric"] {
-        background-color: #14161A;
-        border: 1.5px solid #9E531E;
+        background: linear-gradient(160deg, #1B1613 0%, #131519 100%);
+        border: 1.5px solid #B56024;
         border-radius: 10px;
         padding: 1rem 1.2rem;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
         transition: transform 0.2s ease, border-color 0.2s ease;
     }
     div[data-testid="stMetric"]:hover {
-        border-color: #E8873A;
+        border-color: #F29B50;
         transform: translateY(-2px);
     }
     div[data-testid="stMetricLabel"] > label {
-        color: #C7BEB0 !important;
+        color: #E6DFD3 !important;
         font-weight: 600 !important;
         text-transform: uppercase;
         font-size: 0.78rem !important;
@@ -82,9 +151,9 @@ st.markdown("""
         font-weight: 700 !important;
     }
 
-    /* Botones con borde bronce y efecto hover */
+    /* Botones generales con borde bronce */
     .stButton > button, .stDownloadButton > button {
-        background-color: #191B20 !important;
+        background-color: #21160F !important;
         color: #F5F2EB !important;
         border: 1.5px solid #D4722A !important;
         border-radius: 8px !important;
@@ -94,30 +163,22 @@ st.markdown("""
         transition: all 0.25s ease !important;
     }
     .stButton > button:hover, .stDownloadButton > button:hover {
-        background-color: #C86D2D !important;
+        background-color: #D4722A !important;
         color: #0B0C0E !important;
         border-color: #F29B50 !important;
         box-shadow: 0 0 14px rgba(212, 114, 42, 0.5) !important;
     }
 
-    /* Contenedores de carga de archivos */
-    section[data-testid="stFileUploaderDropzone"] {
-        background-color: #181A1F !important;
-        border: 1.5px dashed #B56024 !important;
-        border-radius: 8px !important;
-    }
-    section[data-testid="stFileUploaderDropzone"]:hover {
-        border-color: #E8873A !important;
-        background-color: #1E2127 !important;
-    }
-
     /* Subtítulos de sección */
     .section-header {
-        color: #E07A2E;
-        font-size: 1.2rem;
+        background-color: rgba(212, 114, 42, 0.12);
+        color: #F5A35C;
+        font-size: 1.15rem;
         font-weight: 700;
-        border-bottom: 1.5px solid #4A2810;
-        padding-bottom: 0.4rem;
+        border-left: 4px solid #E07A2E;
+        border-bottom: 1px solid #6E3B16;
+        border-radius: 0 6px 6px 0;
+        padding: 0.45rem 0.9rem;
         margin-top: 1.2rem;
         margin-bottom: 1rem;
         letter-spacing: 0.4px;
@@ -125,15 +186,15 @@ st.markdown("""
 
     /* Pestañas (Tabs) */
     button[data-baseweb="tab"] {
-        background-color: #14161A !important;
-        border: 1px solid #593014 !important;
+        background-color: #161412 !important;
+        border: 1px solid #7A4219 !important;
         border-radius: 6px 6px 0 0 !important;
-        color: #C7BEB0 !important;
+        color: #D6CFC3 !important;
         margin-right: 4px;
     }
     button[data-baseweb="tab"][aria-selected="true"] {
-        background-color: #241811 !important;
-        border-color: #E07A2E !important;
+        background-color: #2B1B10 !important;
+        border-color: #E8873A !important;
         color: #F5F2EB !important;
         font-weight: 700 !important;
     }
@@ -167,30 +228,45 @@ def estilizar_figura(fig):
     fig.update_layout(
         paper_bgcolor="#14161A",
         plot_bgcolor="#0F1114",
-        font=dict(color="#E8E4DC"),
+        font=dict(color="#F5F2EB"),
         xaxis=dict(gridcolor="#262930", zerolinecolor="#3A3E47"),
         yaxis=dict(gridcolor="#262930", zerolinecolor="#3A3E47"),
         margin=dict(l=20, r=20, t=50, b=20),
-        legend=dict(bgcolor="rgba(20,22,26,0.8)", bordercolor="#8C4A1C", borderwidth=1)
+        legend=dict(bgcolor="rgba(26,20,15,0.85)", bordercolor="#C86D2D", borderwidth=1)
     )
     return fig
 
 # ---------------------------------------------------------
-# BARRA LATERAL: CARGA DE ARCHIVOS Y UMBRALES
+# BARRA LATERAL: CARGA DE ARCHIVOS Y UMBRALES CON RECUADROS BRONCE
 # ---------------------------------------------------------
 with st.sidebar:
-    st.markdown("### 📂 Datasets de Grafana")
-    st.caption("Sube los registros exportados desde InfluxDB / Grafana:")
+    st.markdown("""
+    <div class="sidebar-card">
+        <div class="sidebar-card-title">📂 Datasets de Grafana</div>
+        <p class="sidebar-card-desc">Carga los archivos CSV exportados desde InfluxDB / Grafana para iniciar el diagnóstico:</p>
+    </div>
+    """, unsafe_allow_html=True)
+
     file_temp = st.file_uploader("1. Temperatura de Celdas (.csv)", type=["csv"])
     file_curr = st.file_uploader("2. Corriente de Carga (.csv)", type=["csv"])
 
-    st.markdown("---")
-    st.markdown("### 🛡️ Parámetros de Protección")
+    st.markdown("""
+    <div class="sidebar-card" style="margin-top: 0.6rem;">
+        <div class="sidebar-card-title">🛡️ Parámetros de Protección</div>
+        <p class="sidebar-card-desc">Ajusta los límites operativos de seguridad del banco de baterías:</p>
+    </div>
+    """, unsafe_allow_html=True)
+
     umbral_temp = st.slider("Límite Térmico Crítico (°C)", 30.0, 55.0, 40.0, step=0.5)
     umbral_curr = st.slider("Límite de Corriente Máx. (A)", 3.0, 8.0, 6.5, step=0.1)
 
-    st.markdown("---")
-    st.caption("Arquitectura: ESP32 • ThingsBoard • InfluxDB • Grafana")
+    st.markdown("""
+    <div class="sidebar-card" style="margin-top: 0.8rem; padding: 0.65rem 0.85rem;">
+        <p class="sidebar-card-desc" style="font-size: 0.78rem; text-align: center;">
+            <b>Arquitectura IoT:</b><br>ESP32 • ThingsBoard • InfluxDB • Grafana
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # CUERPO PRINCIPAL DE ANÁLISIS
@@ -199,7 +275,6 @@ if file_temp and file_curr:
     df_t = cargar_csv_grafana(file_temp, "Temperatura_C")
     df_c = cargar_csv_grafana(file_curr, "Corriente_A")
 
-    # Sincronización temporal de ambas series
     df = pd.merge_asof(
         df_t, df_c, on="Tiempo", direction="nearest", tolerance=pd.Timedelta("15s")
     ).dropna()
@@ -214,7 +289,6 @@ if file_temp and file_curr:
         alertas = df[df["Estado_Seguridad"] == "Alerta Crítica"]
         corr = df["Temperatura_C"].corr(df["Corriente_A"])
 
-        # Fila de KPIs
         st.markdown('<div class="section-header">📌 Indicadores Clave de Rendimiento (KPIs)</div>', unsafe_allow_html=True)
         k1, k2, k3, k4 = st.columns(4)
         k1.metric(
@@ -239,7 +313,6 @@ if file_temp and file_curr:
             f"{len(df)} muestras válidas"
         )
 
-        # Pestañas organizadas
         tab1, tab2, tab3 = st.tabs(["📈 Series Temporales", "🔬 Correlación T vs I", "📋 Auditoría y Exportación"])
 
         with tab1:
@@ -302,14 +375,14 @@ if file_temp and file_curr:
             )
 else:
     st.markdown("""
-    <div style="background-color:#14161A; border:1.5px solid #8C4A1C; border-radius:10px; padding:1.5rem; margin-top:1rem;">
-        <h4 style="color:#E07A2E; margin-top:0;">👋 Panel Listo para Análisis</h4>
-        <p style="color:#D0C9BD; margin-bottom:0.5rem;">
+    <div style="background: linear-gradient(145deg, rgba(212, 114, 42, 0.14) 0%, #14161A 100%); border: 1.5px solid #C86D2D; border-left: 5px solid #E8873A; border-radius: 10px; padding: 1.5rem; margin-top: 1rem;">
+        <h4 style="color: #F5A35C; margin-top: 0;">👋 Panel Listo para Análisis</h4>
+        <p style="color: #E6DFD3; margin-bottom: 0.5rem;">
             Para generar las métricas de diagnóstico y las curvas de comportamiento, carga los dos archivos CSV exportados desde Grafana en el panel izquierdo:
         </p>
-        <ul style="color:#B8B2A6; margin-bottom:0;">
-            <li><b>temperatura_celdas.csv</b> (Serie histórica del sensor DHT22)</li>
-            <li><b>corriente_carga.csv</b> (Serie histórica del sensor de corriente)</li>
+        <ul style="color: #D6CFC3; margin-bottom: 0;">
+            <li><b>Temperatura de Celdas (.csv)</b> — Serie histórica del sensor DHT22</li>
+            <li><b>Corriente de Carga (.csv)</b> — Serie histórica del sensor de corriente</li>
         </ul>
     </div>
     """, unsafe_allow_html=True)
